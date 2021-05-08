@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>최반야 : UserInfo.html</title>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+	
+	$(document).ready(function () {
+		$.ajax({
+			url: 'userServlet',
+			type: 'get',
+			dataType :'json',
+			success: showList,
+			error: function(reject) {
+				colsole.log(reject);
+			}
+		});
+		
+		// 등록 버튼을 눌렀을 때 실행되는 것
+		$('#frm').on('submit', function(e) {
+			e.preventDefault();
+			e.stopPropagation();
+			
+			let genVal = $('input[name="gender"]:checked').val();
+						
+			let data = 'userId='+$('#userId').val()+//
+			'&userPass=' + $('#userPass').val()+//
+			'&userName=' + $('#userName').val()+//
+			'&userPhone=' + $('#userPhone').val()+//
+			'&gender=' + genVal;
+			console.log(genVal);
+			
+			let $modifyBtn = $('<button />').html('수정');
+					
+			$.ajax({
+				url: $('#frm').attr('action'),
+				type: 'post',
+				data: data,
+				dataType: 'json',
+				success: function(result) {
+					console.log(result);
+							
+					let $trTag = $('<tr />');
+					let $tbox1 = $('<input />').attr('type','text').attr('name','userPass');
+					let $tbox2 = $('<input />').attr('type','text').attr('name','userPhone');
+					$trTag.append(
+						$('<td />').html(result.userId),
+						$('<td />').append($tbox1.attr('value',result.userPass)),
+						$('<td />').html(result.userName),
+						$('<td />').append($tbox2.attr('value',result.userPhone)),
+						$('<td />').html(result.gender),
+						$('<td />').append($btns = $('<button />').html('수정').click(modi))
+					);
+					$('#tb').append($trTag);
+				},
+				error: function(reject) {
+					console.log(reject);
+				}
+			});
+		});
+		
+		//수정 버튼 클릭시 실행
+		function modi(e) {
+			e.preventDefault();
+			
+			let pass = $(this).parent().parent().children().eq(1).children().val();
+			console.log(pass);
+			
+			let phone = $(this).parent().parent().children().eq(3).children().val();
+			console.log(phone);
+			
+			let id = $(this).parent().parent().children().eq(0).html();
+			console.log(id);
+			
+			$.ajax({
+				url: 'modifyUserServlet',
+				data: 'userPass=' + pass + '&userPhone=' + phone + '&userId=' + id,
+				type: 'post',
+				dataType: 'json',
+				success: function(result) {
+					if(result.returnCode == 'Success'){
+						window.alert('수정 완료되었습니다.')
+					}else{
+						window.alert('<!예외발생!> 수정에 실패하였습니다.')
+					}
+				},
+				error: function(reject) {
+					console.log(reject);
+				}
+			});
+		};
+		
+		function showList(result) {
+			console.log(result);
+			
+			let $table = $('<table id = "tb" />').attr('border', '1');
+			$table.append(tableTitle());
+			
+			for(let obj of result){
+				let $tbox1 = $('<input />').attr('type','text').attr('name','userPass');
+				let $tbox2 = $('<input />').attr('type','text').attr('name','userPhone');
+				let $tr = $('<tr />');
+				$tr.append(
+					$('<td />').html(obj.userId),
+					$('<td />').append($tbox1.attr('value',obj.userPass)),//html(obj.userPass)
+					$('<td />').html(obj.userName),
+					$('<td />').append($tbox2.attr('value',obj.userPhone)),//html(obj.userPhone)
+					$('<td />').html(obj.gender),
+					$('<td />').append($btns=$('<button />').html('수정').click(modi))
+				);
+				$table.append($tr);
+			}
+			$('#show').append($table);
+		}
+		
+		//테이블 타이틀 붙이기 함수
+		function tableTitle() {
+			let $title = $('<tr />')
+			$title.append(
+				$('<th />').html('ID'),
+				$('<th />').html('Password'),
+				$('<th />').html('이름'),
+				$('<th />').html('연락처'),
+				$('<th />').html('성별'),
+				$('<th />').html('기능')
+			);
+			return $title;
+		}
+	});
+	
+
+</script>
+
+</head>
+<body>
+	<form id ='frm' action ='userServlet' method='post'>
+		<table id = "tbl" border = "1">
+		<caption>&lt;등록화면&gt;</caption>
+			<tr>
+				<td>사용ID</td><td><input type="text" name = "userId" id = "userId"></td>
+			</tr>
+			<tr>
+				<td>이름</td><td><input type="text" name = "userName" id = "userName"></td>
+			</tr>
+			<tr>
+				<td>비밀번호</td><td><input type="text" name = "userPass" id = "userPass"></td>
+			</tr>
+			<tr>
+				<td>연락처</td><td><input type="text" name = "userPhone" id = "userPhone"></td>
+			</tr>
+			<tr>
+				<td>성별</td><td><input type = "radio" value = "남성" name = "gender" id = "gender">남성
+								<input type = "radio" value = "여성" name = "gender" id = "gender">여성</td>
+			</tr>
+			<tr>
+				<td colspan="2"><center><input type = "submit" value = "등 록">
+								<input type = "reset" value = "취 소"></center></td>
+			</tr>
+		</table><br><br>
+		<div id = 'show'></div>
+	</form>
+</body>
+</html>
